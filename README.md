@@ -1,103 +1,234 @@
-# Supermarket Chips Sales Dataset - Student Guide
+Here is the **professional, emoji-free version** of the full workflow roadmap.
 
-## Project Overview
-We're analyzing chip (crisp) purchases from a large supermarket chain. This dataset helps us understand:
-- What types of chips customers buy
-- When and where they buy them
-- Who is buying (customer demographics)
-- How much different customer groups spend
+---
 
-## The Two Main Tables
+# **Supermarket Chips Sales Project – Full Workflow Roadmap**
 
-### Table 1: `transactions` - "The Receipt Data"
-Each row represents one line item from a shopping receipt.
+## **PHASE 1 — DATA INGESTION (Reading Files)**
 
-**Example Receipt to Rows:**
-A receipt from July 5, 2025 at Store 5 for Customer 1234:
-- 2 × Smiths Chips Chicken 170g – $5.80
-- 1 × Doritos Cheese 200g – $3.00
+**Goal:** Bring data from external files into Python for initial inspection.
 
-This becomes two rows in the transactions table.
+### Steps Completed
 
-**Key Columns:**
-- `DATE`: Purchase date
-- `STORE_NBR`: Store number (e.g., Store 1, Store 88)
-- `LYLTY_CARD_NBR`: Customer's loyalty card number
-- `TXN_ID`: Unique receipt ID (same for all items bought together)
-- `PROD_NBR`: Product code
-- `PROD_NAME`: Product description (brand + flavor + size)
-- `PROD_QTY`: Number of packs purchased in this line
-- `TOT_SALES`: Total amount paid for this line (price × quantity)
+1. Read CSV file using pandas:
 
-**One row means:** "On this date, at this store, this customer bought this many packs of this specific chip product and paid this amount."
+   ```python
+   purchase_df = pd.read_csv("purchase_data.csv")
+   ```
+2. Read Excel file:
 
-### Table 2: `customer_behaviour` - "The Customer Profile"
-Each row represents one customer (one loyalty card holder).
+   ```python
+   transaction_df = pd.read_excel("transaction.xlsx")
+   ```
+3. Performed `.head()`, `.shape()`, and `.info()` to understand the structure of both datasets.
+4. Cleaned and converted date columns using `pd.to_datetime()`.
 
-**Key Columns:**
-- `LYLTY_CARD_NBR`: Loyalty card number (links to transactions)
-- `LIFESTAGE`: Customer life stage group:
-  - "YOUNG SINGLES/COUPLES"
-  - "YOUNG FAMILIES"
-  - "MIDAGE SINGLES/COUPLES"
-  - "OLDER FAMILIES"
-  - "RETIREES"
-- `PREMIUM_CUSTOMER`: Spending category:
-  - "Budget" – prefers cheaper options
-  - "Mainstream" – average shopper
-  - "Premium" – prefers higher-priced brands
+### Concepts Covered
 
-**One row means:** "Customer with card number X is in this life stage group and shops in this spending category."
+* File formats (CSV, Excel)
+* DataFrames
+* Data types (string, integer, float, datetime)
 
-## How the Tables Connect
+---
 
-The two tables are linked by the `LYLTY_CARD_NBR` (loyalty card number).
+## **PHASE 2 — DATA STORAGE (Database & SQL Layer)**
 
-```
-Customer Profile → Many Transactions
-(customer_behaviour)   (transactions)
-      ↓                       ↓
-"Who they are"        "What they bought"
-```
+**Goal:** Store structured data in a relational database for secure and scalable use.
 
-## Real-World Analogy
+### Steps Completed
 
-Think of this as the supermarket's memory system:
-1. **Transactions table** = Every line on every receipt saved in the system
-2. **Customer table** = The information collected when customers signed up for their loyalty card
+1. Loaded environment variables containing `DATABASE_URL`.
+2. Created a SQLAlchemy engine:
 
-## Data Science Concepts
+   ```python
+   engine = create_engine(db_url)
+   ```
+3. Loaded DataFrames into PostgreSQL tables using:
 
-**Entities (Things in the Data):**
-- Customers (in customer_behaviour)
-- Transactions (shopping trips)
-- Products (chip varieties)
-- Stores (locations)
+   ```python
+   df.to_sql("table_name", schema="customer_data", ...)
+   ```
+4. Verified that all tables are correctly stored in the database.
 
-**Table Granularity (Level of Detail):**
-- `customer_behaviour`: One row per customer
-- `transactions`: One row per product per shopping trip
+### Concepts Covered
 
-**Relationships:**
-- One customer → Many transactions (one person shops many times)
-- One transaction → Many rows (one receipt has multiple products)
-- One store → Many transactions (many sales per store)
-- One product → Many transaction rows (same product sold many times)
+* Purpose of databases
+* Database schemas
+* Tables and relationships
+* Primary and foreign keys
+* Writing pandas DataFrames to SQL
 
-## Why This Structure Matters
+---
 
-This is exactly how real supermarkets organize their data. With these two tables joined together, we can answer questions like:
-- Do young families buy different chips than retirees?
-- Do premium customers spend more per purchase than budget customers?
-- Which life stage buys the most chips in total?
-- Are certain chip brands popular with specific customer types?
+# **PHASE 3 — DATA PREPARATION (Cleaning & Transformation)**
 
-## How to Think About Analysis
+**Goal:** Prepare clean, accurate, analysis-ready data for downstream use.
 
-When you work with this data, remember:
-1. **Customer perspective**: "What do different types of people buy?"
-2. **Product perspective**: "Who buys each type of chip?"
-3. **Store perspective**: "Which stores sell the most chips?"
-4. **Time perspective**: "When do people buy chips?"
+### Next Steps
 
-This dataset gives you real-world experience with relational data, similar to what data analysts use in retail companies every day.
+1. Check for missing values:
+
+   ```python
+   df.isna().sum()
+   ```
+2. Identify and remove duplicates:
+
+   ```python
+   df.drop_duplicates()
+   ```
+3. Correct data types (e.g., convert DATE to datetime, ensure TOT_SALES is numeric).
+4. Engineer new useful fields such as:
+
+   * Month of purchase
+   * Year
+   * Brand extracted from `PROD_NAME`
+   * Pack size extracted from `PROD_NAME`
+5. Remove invalid or corrupted transaction records, such as negative totals or zero quantity.
+
+### Concepts Covered
+
+* ETL workflow (Extract → Transform → Load)
+* Data wrangling
+* Feature engineering
+
+---
+
+# **PHASE 4 — DATA ANALYSIS (Exploratory Data Analysis in Python)**
+
+**Goal:** Answer business questions using Python, pandas, and grouped calculations.
+
+### Analytical Steps
+
+1. Join tables using the loyalty card number:
+
+   ```python
+   merged_df = transactions.merge(customer_behaviour, on="LYLTY_CARD_NBR")
+   ```
+
+2. Explore purchasing behavior by:
+
+   * Life stage
+   * Premium category
+   * Store
+   * Product brand
+   * Time (monthly sales trends)
+
+3. Calculate aggregations:
+
+   * Total sales
+   * Total quantity sold
+   * Average spend per customer
+   * Most popular chip brands
+   * Sales by customer class
+
+4. Apply groupby operations:
+
+   ```python
+   merged_df.groupby("LIFESTAGE")["TOT_SALES"].sum()
+   ```
+
+5. Create visualizations using Matplotlib and Seaborn:
+
+   * Bar charts for top brands
+   * Line charts for monthly sales
+   * Distribution plots
+   * Heatmaps for store performance
+
+### Concepts Covered
+
+* Table joins
+* GroupBy operations
+* Statistical summaries
+* Visualization techniques
+* Deriving insights from data
+
+---
+
+# **PHASE 5 — REPORTING (Narratives and Visuals)**
+
+**Goal:** Convert analytical results into business-ready written reports.
+
+### Reporting Steps
+
+1. Summarize key findings such as:
+
+   * Customer groups with the highest chip purchases
+   * Top-performing brands
+   * High-performing and low-performing stores
+   * Time periods with highest sales activity
+2. Export cleaned tables to Excel or CSV for presentation.
+3. Create PDF or Word reports containing visualizations and insights.
+
+### Concepts Covered
+
+* Business communication
+* Insight interpretation
+* Structuring a data report
+
+---
+
+# **PHASE 6 — DASHBOARDING (Interactive Insights Delivery)**
+
+**Goal:** Build an interactive dashboard to present insights in a dynamic and user-friendly manner.
+
+### Recommended Tools
+
+* Power BI
+* Tableau
+* Streamlit
+* Excel dashboards
+
+### Dashboard Structure
+
+1. **Sales Overview**
+
+   * Total sales
+   * Total quantity sold
+   * Average weekly or monthly figures
+
+2. **Customer Segmentation**
+
+   * Life stage categories
+   * Premium/Mainstream/Budget groups
+
+3. **Product Analysis**
+
+   * Top brands
+   * Top flavors
+   * Most profitable chip products
+
+4. **Store Analysis**
+
+   * Best-performing stores
+   * Underperforming stores
+   * Store-by-store breakdown
+
+5. **Time Trends**
+
+   * Monthly sales patterns
+   * Seasonal demand
+
+### Concepts Covered
+
+* Data modeling
+* DAX (for Power BI users)
+* Visual selection and placement
+* KPI cards, slicers, filters
+
+---
+
+# **PHASE 7 — PRESENTATION & INSIGHTS DELIVERY**
+
+**Goal:** Deliver a polished, end-to-end analytics project.
+
+### Final Deliverables
+
+1. Clean and structured SQL database
+2. Full analysis notebook in Jupyter
+3. Interactive dashboard (Power BI or Streamlit)
+4. A concise insights summary (1–2 pages)
+5. Recommendations such as:
+
+   * Inventory strategy for premium chips
+   * Targeting specific customer groups
+   * Store-level performance improvements
