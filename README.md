@@ -1,7 +1,3 @@
-Here is the **professional, emoji-free version** of the full workflow roadmap.
-
----
-
 # **Supermarket Chips Sales Project – Full Workflow Roadmap**
 
 ## **PHASE 1 — DATA INGESTION (Reading Files)**
